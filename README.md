@@ -6,6 +6,8 @@ Welcome to Antigo! This is a simple and user-friendly C++ library for debugging,
 
 ## What’s Cool About Antigo
 
+Ever found yourself in a situation where your users face a critical issue, but your logs lack the necessary insight, and you end up spending days trying to figure out what’s going on? And that's assuming you're dealing with backend - but what if your code runs as a desktop app? Well, there’s a solution now, and it works in both environments!
+
 Antigo makes use of C++ features to automatically link to the previous context and detect in-flight exceptions, giving you some handy functionality:
 
 1. **Automatic Context Passing:** No need to pass context through every function! Just declare it at the start of your function, and it’ll be passed along automatically through thread-local storage. This is super helpful when dealing with stack frames that you don’t control (like other C++ libraries or even different programming languages).
@@ -19,22 +21,6 @@ Antigo makes use of C++ features to automatically link to the previous context a
 5. **Key-Value Storage:** _(Coming soon)_ Store values related to the current execution scope to easily log important info or even pass callbacks.
 
 For more examples of how to use Antigo, check out this README and [unit tests](https://github.com/nic11/antigo/blob/master/unit/src/ContextTest.cpp).
-
-## Roadmap
-
-- [x] Proof of concept
-- [x] Initial release
-- [ ] Some refactoring for better naming and code structure
-- [ ] vcpkg port
-- [ ] More C++ packages
-- [ ] Key-value storage
-- [ ] Optimisation (a lot of dynamic allocations for custom types could be avoided)
-- [ ] Native stacktrace integration
-- [ ] Better exception safety
-- [ ] JSON export: have your error dumps ready for automatic analysis
-- [ ] Coroutines support
-
-If you want to integrate Antigo into your codebase, have a cool idea, or are enthusiastic enough to help with development, please don't hesitate to reach out! You can find contacts on my GitHub profile.
 
 ## How To Use
 
