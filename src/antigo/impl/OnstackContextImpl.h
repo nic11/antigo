@@ -2,12 +2,10 @@
 
 #include "antigo/Context.h"
 
-#include <bitset>
 #include <cassert>
 #include <cstdint>
-#include <fmt/format.h>
 #include <memory>
-#include <optional>
+#include <limits>
 #include <variant>
 #include <string>
 
@@ -36,30 +34,6 @@ std::string Strip(const std::string& s) {
   return s.substr(0, len);
 }
 
-// FIXME: should be separate for each size
-// (uint) uint: 1736811162163836790 | int: 1736811162163836790 | hex: 0x181a648ccab57776 | bin: 0001100000011010011001001000110011001010101101010111011101110110
-std::string IntRepresentations(uint64_t val) {
-  std::bitset<64> binaryVal(val);
-
-  return fmt::format(
-    "{} | hex: 0x{:x} | bin: {}",
-    val,
-    val,
-    binaryVal.to_string()
-  );
-}
-
-std::string IntRepresentations(int64_t val) {
-  std::bitset<64> binaryVal(val);
-
-  return fmt::format(
-    "{} | hex as uint: 0x{:x} | bin: {}",
-    val,
-    static_cast<uint64_t>(val),
-    binaryVal.to_string()
-  );
-}
-
 } // namespace
 
 struct OnstackDataFrame;
@@ -74,11 +48,11 @@ struct OnstackDataFrame {
     }
 
     ResolvedMessageEntry operator()(uint64_t v) const {
-      return {"uint", IntRepresentations(v)};
+      return {"uint", std::to_string(v)};
     }
 
     ResolvedMessageEntry operator()(int64_t v) const {
-      return {"int", IntRepresentations(v)};
+      return {"int", std::to_string(v)};
     }
 
     ResolvedMessageEntry operator()(const std::unique_ptr<OwnedValue>& v) const {
