@@ -1,59 +1,54 @@
 # Antigo
 
-Welcome to Antigo! This is a simple and user-friendly C++ library for debugging, inspired by the context paradigm from Go.
+Welcome to Antigo! This is a simple and user-friendly C++ library for debugging, inspired by the context paradigm from Go. The idea behind Antigo is to combine strenghs of stacktraces and core dumps.
 
 🚧 **Heads up:** Antigo is still in development and might receive a lot of breaking changes. Check out the roadmap below if you’re curious about what’s coming up!
 
 ## What’s Cool About Antigo
 
-Ever found yourself in a situation where your users face a critical issue, but your logs lack the necessary insight, and you end up spending days trying to figure out what’s going on? And that's assuming you're dealing with backend - but what if your code runs as a desktop app? Well, there’s a solution now, and it works in both environments!
-
-Antigo makes use of C++ features to automatically link to the previous context and detect in-flight exceptions, giving you some handy functionality:
-
-1. **Automatic Context Passing:** No need to pass context through every function! Just declare it at the start of your function, and it’ll be passed along automatically through thread-local storage. This is super helpful when dealing with stack frames that you don’t control (like other C++ libraries or even different programming languages).
-
-2. **Minimalist Yet Powerful Interface:** Antigo was designed to have little impact on performance. Log strings, numbers, or even lambdas! Everything is kept in leightweight form by default and only evaluated when needed.
-
-3. **Stacktrace-Like Format:** Call `ctx.Resolve()` whenever! It resolves logged values, and presents them in a nice, readable (as much as possible) stacktrace-like format. This also happens automatically if an exception occurs.
-
-4. **Automatic Exception Detection:** Antigo detects exceptions for you! You’ll know exactly where an exception comes from and also get all the messages logged from lower frames. This mechanism doesn't interfere with normal exception flow, you just get more information using the so-called 'exception witness' mechanism.
-
-5. **Key-Value Storage:** _(Coming soon)_ Store values related to the current execution scope to easily log important info or even pass callbacks.
-
-For more examples of how to use Antigo, check out this README and [unit tests](https://github.com/nic11/antigo/blob/master/unit/src/ContextTest.cpp).
-
-## How To Use
+Let me jump straight to the action:
 
 ```cpp
-void MyFunction(int a, int b) {
-  ANTIGO_CONTEXT_INIT(ctx);
-  ctx.AddSigned(a);
-  ctx.AddSigned(b);
+void MyCoolFunc(...)
+{
+  ANTIGO_CONTEXT_INIT(ctx);  // <<< 1. This is all you need to have all features available in your cool function!
 
-  if (a == 0 || b == 0) {
-    ctx.AddMessage("one of params is zero");
-    DoSomethingSpecial(a, b);
-    return;
+  // vvv 2. Minimalist Yet Powerful Interface
+  ctx.AddSigned(123456); // any numbers
+  ctx.AddMessage("any compile-time string to help you orient");
+  ctx.AddLambdaWithOwned([some_vector] {
+    return std::to_string(some_vector.size()) + " elements in the vector";
+    // or basically ANYTHING else! It won't be called unless needed
+  });
+
+  if (/* something worth debugging */) {
+    your_logger::error("Whoops! Take a look: {}", ctx.Resolve().ToString());
+    // ^^^ 3. Get everything logged above in this log... or do this:
+    this_guy_has_broke_the_state = ctx.Resolve();
+    // and log that later
   }
 
-  ctx.AddMessage("normal case");
-  // ...
+  SomeOtherFunctionThatThrows(...);
+  // ^^^ 4. Will detect exception from here! You'll get all the messages just as with the manual ctx.Resolve() call
+
+  // Nothing happened? Nothing evaluated!
 }
 
-void Magic() {
-  // ...
-  try {
-    MyFunction(a, b);
-  } catch (const std::exception& ex) {
-    std::cerr << "Caught exception: " << ex.what() << "\n";
-    while (antigo::HasExceptionWitness()) {
-      auto w = antigo::PopExceptionWitness();
-      std::cerr << "resolved witness: " << w.ToString() << "\n";
-    }
-  }
-}
+// ...
+MyCoolFunc(...);
 ```
 
-Now, if an exception occurs inside `MyFunction`, you would see it in the output. This would work even if `Magic` doesn't call `MyFunction` directly.
+## Why was it created?
+
+Ever found yourself in a situation where your users face a critical issue, but your logs lack the necessary insight, and you end up spending days trying to figure out what’s going on? And that's assuming you're dealing with backend - but what if your code runs as a desktop app? Well, there’s a solution now, and it works in both environments!
+
+## What's under the hood?
+
+1. Context is passed automatically by storing a 'parallel' stack in the thread-local storage. It has debug information like function names, source locations, as well as the informataion you logged.
+2. The logging mechanism is designed to be as lightweight as possible. And it **is** lightweight, leading to a negligible impact on performance (but it still has space for improval).
+  * When you log a string, a `char*` pointer is saved. This is possible because the standard guarantees that these addresses will be valid throughout the execution. And this is also why the strings you logged must be static.
+  * To log more complex values, you can write custom lambdas that return `std::string`. The idea behind this is to give you a robust way to provide any custom logic you might want, while not executing it right away. Antigo lets you specify lambda's lifetime to ensure that references don't expire by the time of evaluation.
+3. `ctx.Resolve()` call walks through the 'parallel' stack, copies data, and calls your custom lambdas. This gives you a `ResolvedContext` instance that you can then call `.ToString()` on, not necessarily immediately.
+4. `Context` detects exceptions by calling [`std::uncaught_exceptions()`](https://en.cppreference.com/w/cpp/error/exception/uncaught_exception.html) in its constructor and destructor and comparing these values. If these values differ, that means that the current scope had an exception that flew outside its boundaries. Antigo provides functions to collect `ResolvedContext` as soon as an exception is detected. I called them 'exception witnesses'.
 
 More detailed documentation is coming soon. In the meantime you can check [unit tests](https://github.com/nic11/antigo/blob/master/unit/src/ContextTest.cpp).
