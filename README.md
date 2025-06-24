@@ -1,6 +1,6 @@
 # Antigo
 
-Welcome to Antigo! This is a simple and user-friendly C++ library for debugging, inspired by the context paradigm from Go. The idea behind Antigo is to combine strenghs of stacktraces and core dumps.
+Welcome to Antigo! This is a simple and user-friendly C++ library for debugging, inspired by the context paradigm from Go. The idea behind Antigo is to combine strengths of stacktraces and core dumps.
 
 🚧 **Heads up:** Antigo is still in development, so the exact API is not set in stone just yet. Feel free to suggest new ideas and follow the updates.
 
@@ -52,11 +52,11 @@ Some examples:
 
 **Solution:** Antigo was created to ease this pain. You just run `ctx.Resolve()` and get a stacktrace-like dump with the values that you logged. The caveat? You need to log those values. The benefit? You can log them however you want! You won't have to write gdb scripts or parse cryptic values and remember what that private field was.
 
-## Technical Overview
+## Under the Hood
 
 1. Context is passed automatically by storing a 'parallel' stack in the thread-local storage. It has debug information like function names, source locations, as well as the informataion you logged.
 2. The logging mechanism is designed to be as lightweight as possible. And it **is** lightweight, leading to a negligible impact on performance (but it still has space for improval).
-    * When you log a string, a `char*` pointer is saved. This is possible because the standard guarantees that these addresses will be valid throughout the execution. And this is also why the strings you logged must be static.
+    * When you log a string, a `char*` pointer is saved. This is possible because the standard guarantees that these addresses will be valid throughout the execution. And this is also why the strings you log must be static.
     * To log more complex values, you can write custom lambdas that return `std::string`. The idea behind this is to give you a robust way to provide any custom logic you might want, while not executing it right away. Antigo lets you specify lambda's lifetime to ensure that references don't expire by the time of evaluation.
 3. `ctx.Resolve()` call walks through the 'parallel' stack, copies data, and calls your custom lambdas. This gives you a `ResolvedContext` instance that you can then call `.ToString()` on, not necessarily immediately.
 4. `Context` detects exceptions by calling [`std::uncaught_exceptions()`](https://en.cppreference.com/w/cpp/error/exception/uncaught_exception.html) in its constructor and destructor and comparing these values. If they differ, that means that the current scope had an exception that flew outside its boundaries. Antigo provides functions to collect `ResolvedContext` as soon as an exception is detected. I called them 'exception witnesses'. This allows you to get additional info about the exception you just caught without affecting the way you (or third-party code) catch them.
