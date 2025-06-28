@@ -50,7 +50,7 @@ Some examples:
 * Your application crashed on Windows, but you run Linux. Or vice-versa. You don't want to run VMs
 * You want something like a core dump, but not as heavy. You also want to get it at any time without crashing the program
 
-**Solution:** Antigo was created to ease this pain. You just run `ctx.Resolve()` and get a stacktrace-like dump with the values that you logged. The caveat? You need to log those values. The benefit? You can log them however you want! You won't have to write gdb scripts or parse cryptic values and remember what that private field was.
+**Solution:** Antigo was created to ease this pain. You just run `ctx.Resolve()` and get a stacktrace-like dump with the values that you logged. The caveat? You need to log those values. The benefit? You can log them however you want! You won't have to write gdb scripts or parse cryptic values and remember what that private field was. Plus, Antigo is platform independent, as it only depends on core C++ features!
 
 ## Under the Hood
 
